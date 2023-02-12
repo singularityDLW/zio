@@ -175,10 +175,10 @@ object ZPool {
                       case Exit.Success(item) =>
                         invalidated.get.flatMap { set =>
                           if (set.contains(item)) finalizeInvalid(attempted) *> acquire
-                          else ZIO.succeed(attempted)
+                          else ZIO.succeedNow(attempted)
                         }
                       case _ =>
-                        ZIO.succeed(attempted)
+                        ZIO.succeedNow(attempted)
                     }
                   },
                   State(size, free - 1)

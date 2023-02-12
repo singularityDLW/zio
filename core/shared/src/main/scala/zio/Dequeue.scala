@@ -89,7 +89,7 @@ trait Dequeue[+A] extends Serializable {
     ZIO.suspendSucceed {
 
       def takeRemainder(min: Int, max: Int, acc: Chunk[A]): UIO[Chunk[A]] =
-        if (max < min) ZIO.succeed(acc)
+        if (max < min) ZIO.succeedNow(acc)
         else
           takeUpTo(max).flatMap { bs =>
             val remaining = min - bs.length
@@ -101,7 +101,7 @@ trait Dequeue[+A] extends Serializable {
 
               }
             } else
-              ZIO.succeed(acc ++ bs)
+              ZIO.succeedNow(acc ++ bs)
           }
 
       takeRemainder(min, max, Chunk.empty)

@@ -365,7 +365,7 @@ object Gen extends GenZIO with FunctionVariants with TimeVariants {
    * A constant generator of the specified sample.
    */
   def constSample[R, A](sample: => Sample[R, A])(implicit trace: Trace): Gen[R, A] =
-    fromZIOSample(ZIO.succeed(sample))
+    fromZIOSample(ZIO.succeedNow(sample))
 
   /**
    * A generator of doubles. Shrinks toward '0'.

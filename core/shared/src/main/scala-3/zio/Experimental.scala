@@ -31,7 +31,7 @@ object Experimental {
     def fromThrows[E <: Exception, A](a: => A throws E): IO[E, A] =
       ZIO.suspendSucceed {
         try {
-          Exit.succeed(a)
+          ZIO.succeedNow(a)
         } catch {
           case e: E => ZIO.fail(e)
         }

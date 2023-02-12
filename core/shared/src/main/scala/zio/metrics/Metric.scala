@@ -134,7 +134,7 @@ trait Metric[+Type, -In, +Out] extends ZIOAspect[Nothing, Any, Nothing, Any, Not
    */
   final def modify(in: => In)(implicit trace: Trace): UIO[Unit] =
     FiberRef.currentTags.getWith { tags =>
-      ZIO.succeed(unsafe.modify(in, tags)(Unsafe.unsafe))
+      ZIO.succeedNow(unsafe.modify(in, tags)(Unsafe.unsafe))
     }
 
   /**
@@ -212,7 +212,7 @@ trait Metric[+Type, -In, +Out] extends ZIOAspect[Nothing, Any, Nothing, Any, Not
           },
           a => {
             unsafe.update(in)(Unsafe.unsafe)
-            ZIO.succeed(a)
+            ZIO.succeedNow(a)
           }
         )
     }
@@ -313,7 +313,7 @@ trait Metric[+Type, -In, +Out] extends ZIOAspect[Nothing, Any, Nothing, Any, Not
    */
   final def update(in: => In)(implicit trace: Trace): UIO[Unit] =
     FiberRef.currentTags.getWith { tags =>
-      ZIO.succeed(unsafe.update(in, tags)(Unsafe.unsafe))
+      ZIO.succeedNow(unsafe.update(in, tags)(Unsafe.unsafe))
     }
 
   /**
@@ -321,7 +321,7 @@ trait Metric[+Type, -In, +Out] extends ZIOAspect[Nothing, Any, Nothing, Any, Not
    */
   final def value(implicit trace: Trace): UIO[Out] =
     FiberRef.currentTags.getWith { tags =>
-      ZIO.succeed(unsafe.value(tags)(Unsafe.unsafe))
+      ZIO.succeedNow(unsafe.value(tags)(Unsafe.unsafe))
     }
 
   final def withNow[In2](implicit ev: (In2, java.time.Instant) <:< In): Metric[Type, In2, Out] =
