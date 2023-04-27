@@ -1991,7 +1991,7 @@ final class ZStream[-R, +E, +A] private (val channel: ZChannel[R, Any, Any, Any,
   def mapZIOPar[R1 <: R, E1 >: E, A2](n: => Int)(f: A => ZIO[R1, E1, A2])(implicit
     trace: Trace
   ): ZStream[R1, E1, A2] =
-    self >>> ZPipeline.mapZIOPar(n)(f)
+    new ZStream(self.channel.concatMap(ZChannel.writeChunk(_)).mapOutZIOPar[R1, E1, A2](n)(f).mapOut(Chunk.single))
 
   /**
    * Maps over elements of the stream with the specified effectful function,
@@ -2135,7 +2135,7 @@ final class ZStream[-R, +E, +A] private (val channel: ZChannel[R, Any, Any, Any,
    * previous executor.
    */
   def onExecutor(executor: => Executor)(implicit trace: Trace): ZStream[R, E, A] =
-    ZStream.scoped(ZIO.onExecutorScoped(executor)) *> self
+    new ZStream(self.channel.onExecutor(executor))
 
   /**
    * Translates any failure into a stream termination, making the stream
@@ -3197,8 +3197,12 @@ final class ZStream[-R, +E, +A] private (val channel: ZChannel[R, Any, Any, Any,
           cause => ZChannel.fromZIO(queue.offer(Take.failCause(cause))),
           _ => ZChannel.fromZIO(queue.offer(Take.end))
         )
-      new ZStream((self.channel >>> loop).ensuring(queue.offer(Take.end).forkDaemon *> promise.await))
-        .merge(ZStream.execute(right.run(sink).ensuring(promise.succeed(()))), HaltStrategy.Both)
+      ZStream
+        .execute(right.run(sink).ensuring(promise.succeed(())))
+        .merge(
+          new ZStream((self.channel >>> loop).ensuring(queue.offer(Take.end).forkDaemon *> promise.await)),
+          HaltStrategy.Both
+        )
     }
 
   /**
@@ -5048,7 +5052,7 @@ object ZStream extends ZStreamPlatformSpecificConstructors {
     def apply[E, A](fa: => ZIO[Scope with R, E, ZStream[R, E, A]])(implicit
       trace: Trace
     ): ZStream[R, E, A] =
-      scoped[R](fa).flatten
+      new ZStream(ZChannel.unwrapScoped[R](fa.map(_.channel)))
   }
 
   /**
